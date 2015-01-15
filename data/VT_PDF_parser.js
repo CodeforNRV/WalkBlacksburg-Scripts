@@ -7,7 +7,7 @@ var pdfParser = new PDFParser();
 
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 //Using a local copy for offline development
-pdfParser.loadPDF('/tmp/VT_2014-12_Crime_Log.pdf');
+pdfParser.loadPDF('VT_2014-12_Crime_Log.pdf');
 
 //Create an empty data structure for the output
 var dataRows = [];
@@ -22,17 +22,25 @@ function newRow(finishedRow) {
 	return emptyRow;
 }
 
+//The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
+////Using a local copy for offline development
+
+pdfParser.loadPDF('VT_2014-12_Crime_Log.pdf');
+pdfParser.on("pdfParser_dataReady", function(jsonData) {
+
 var currentRow = null;
 var isNewRow = true;
 
 //Grab the pages in the PDF
-var pages = pdfParser.data.Pages;
+var pages = jsonData.data.Pages;
 
 //For every page in the PDF, we'll look through each of the Texts arrays to pull out the fields
 for (var i=0; i<pages.length; i++) {
+	//console.log(i);
 	var page = pages[i];
 	var texts = page.Texts;
-	
+	var inPageHeaders = true;
+
 	//For every text field, we need to parse and decide which column it belongs to
 	for (var j=0; j<texts.length; j++) {
 		textInfo = texts[j];
@@ -40,8 +48,8 @@ for (var i=0; i<pages.length; i++) {
 		
 		//Each page contains a bunch of text fields until you get to the column headers that ends with "Disposition"
 		//We want to (probably) start with the field following "Disposition", which should be the case number
-		while (text != "Disposition") { continue; }
-		if (text == "Disposition") { continue; }
+		if (text != "Disposition" && inPageHeaders) { continue; }
+		if (text == "Disposition" && inPageHeaders) { inPageHeaders = false; continue; }
 		
 		//Unfortunately, the fields don't break down perfectly, so things we want to keep together might be broken into multiple parts
 		//For example, multi-line fields in the PDF will be different elements in the texts array
@@ -91,3 +99,5 @@ for (var i=0; i<pages.length; i++) {
 		isNewRow = true; //Everything except a case # will reach here, so that each time we hit a new case # column we can know it is a new row
 	}
 }
+
+}); //End pdfParser_dataReady
