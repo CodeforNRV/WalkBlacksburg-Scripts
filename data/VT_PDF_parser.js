@@ -17,7 +17,8 @@ function newRow(finishedRow) {
 	emptyRow = {"caseNumber":null, "dateReported":null, "criminalOffense":null, "location":null, "date":null, "time":null, "disposition":null};
 	if (finishedRow) {
 		dataRows.push(finishedRow);
-		console.log("Wrote row " + dataRows.length);
+		//console.log(JSON.stringify(finishedRow, null, 4));
+		fs.appendFileSync("/tmp/output.json", JSON.stringify(finishedRow, null, 4) + ',');
 	}
 	return emptyRow;
 }
@@ -69,31 +70,32 @@ for (var i=0; i<pages.length; i++) {
 			if(isNewRow) {
 				currentRow = newRow(currentRow);
 				isNewRow = false;
-			} else { currentRow.caseNumber += " " + text }
+				currentRow.caseNumber = text;
+			} else { currentRow.caseNumber += "" + text }
 			continue;
 		} else if (textInfo.x < 20.0) {
 			//Date Reported column
-			if (currentRow.dateReported) { currentRow.dateReported += " " + text;
+			if (currentRow.dateReported) { currentRow.dateReported += "" + text;
 			} else { currentRow.dateReported = text; }
-		} else if (textInfo.x < 30.0) {
+		} else if (textInfo.x < 50.0) {
 			//Criminal Offense column
-			if (currentRow.criminalOffense) { currentRow.criminalOffense += " " + text;
+			if (currentRow.criminalOffense) { currentRow.criminalOffense += "" + text;
 			} else { currentRow.criminalOffense = text; }
-		} else if (textInfo.x < 62.0) {
+		} else if (textInfo.x < 80.0) {
 			//Location column
-			if (currentRow.location) { currentRow.location += " " + text;
+			if (currentRow.location) { currentRow.location += "" + text;
 			} else { currentRow.location = text; }
 		} else if (textInfo.x < 90.0) {
 			//Occurence date column
-			if (currentRow.date) { currentRow.date += " " + text;
+			if (currentRow.date) { currentRow.date += "" + text;
 			} else { currentRow.date = text; }
 		} else if (textInfo.x < 98.0) {
 			//Occurence time column
-			if (currentRow.time) { currentRow.time += " " + text;
+			if (currentRow.time) { currentRow.time += "" + text;
 			} else { currentRow.time = text; }
 		} else if (textInfo.x > 105) {
 			//Disposition column
-			if (currentRow.disposition) { currentRow.disposition += " " + text;
+			if (currentRow.disposition) { currentRow.disposition += "" + text;
 			} else { currentRow.disposition = text; }
 		}		
 		isNewRow = true; //Everything except a case # will reach here, so that each time we hit a new case # column we can know it is a new row
