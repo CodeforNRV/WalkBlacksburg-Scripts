@@ -5,6 +5,9 @@
 var nodeUtil = require("util"), fs = require("fs"), PDFParser = require("pdf2json/pdfparser");
 var pdfParser = new PDFParser();
 
+//Install node-gdal: https://github.com/naturalatlas/node-gdal
+var gdal = require('gdal');
+
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 //Using a local copy for offline development
 pdfParser.loadPDF('VT_2014-12_Crime_Log.pdf');
