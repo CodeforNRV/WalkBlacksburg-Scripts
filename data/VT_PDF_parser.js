@@ -2,12 +2,22 @@
 
 //Runs on node.js and Requires the pdf2json library which can be found in npm (https://github.com/modesty/pdf2json)
 
-var nodeUtil = require("util"), fs = require("fs"), PDFParser = require("pdf2json/pdfparser");
+var nodeUtil = require("util"), fs = require("fs"), PDFParser = require("pdf2json/pdfparser"), http = require('http');;
 var pdfParser = new PDFParser();
+
+var date = new Date();
+var year = date.getFullYear();
+var month = date.getMonth()+1;
+month = "0" + month;
+month = month.substr(month.length - 2);
+
+var url = "http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/";
+url += "VT_" + year + "-" + month + "_Crime_Log.pdf";
+console.log(url);
 
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 //Using a local copy for offline development
-pdfParser.loadPDF('VT_2014-12_Crime_Log.pdf');
+//pdfParser.loadPDF(url);
 
 //Create an empty data structure for the output
 var dataRows = [];
@@ -17,8 +27,8 @@ function newRow(finishedRow) {
 	emptyRow = {"caseNumber":null, "dateReported":null, "criminalOffense":null, "location":null, "date":null, "time":null, "disposition":null};
 	if (finishedRow) {
 		dataRows.push(finishedRow);
-		//console.log(JSON.stringify(finishedRow, null, 4));
-		fs.appendFileSync("/tmp/output.json", JSON.stringify(finishedRow, null, 4) + ',');
+		console.log(JSON.stringify(finishedRow, null, 4));
+		fs.appendFileSync("./tmp/output.json", JSON.stringify(finishedRow, null, 4) + ',');
 	}
 	return emptyRow;
 }
@@ -26,7 +36,18 @@ function newRow(finishedRow) {
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 ////Using a local copy for offline development
 
-pdfParser.loadPDF('VT_2014-12_Crime_Log.pdf');
+
+var download = function(url, dest, cb) {
+  var file = fs.createWriteStream(dest);
+  var request = http.get(url, function(response) {
+    response.pipe(file);
+    file.on('finish', function() {
+      file.close(cb);
+      pdfParser.loadPDF(dest);
+    });
+  });
+}
+
 pdfParser.on("pdfParser_dataReady", function(jsonData) {
 
 var currentRow = null;
@@ -103,3 +124,5 @@ for (var i=0; i<pages.length; i++) {
 }
 
 }); //End pdfParser_dataReady
+
+download(url, "./tmp/test.pdf", null);
