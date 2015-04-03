@@ -10,6 +10,7 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "pdf2json": "~0.7.1",
-    "iron_worker": "~0.1.4"
+    "iron_worker": "~0.1.4",
+    "mongodb": "~2.0.25"
   }
 }
