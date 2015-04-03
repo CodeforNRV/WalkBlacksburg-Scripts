@@ -1,0 +1,6 @@
+# define the runtime language
+runtime "node"
+# exec is the file that will be executed:
+exec "VT_PDF_parser.js"
+dir "node_modules" # include dependency files when uploading
+file "package.json" # include dependency manifest when uploading

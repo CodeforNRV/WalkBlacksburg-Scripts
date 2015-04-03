@@ -1,2 +1,3 @@
-
-data/tmp/
+node_modules/
+data/iron.json
+data/config.json

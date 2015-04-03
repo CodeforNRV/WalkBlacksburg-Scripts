@@ -2,7 +2,14 @@
 
 //Runs on node.js and Requires the pdf2json library which can be found in npm (https://github.com/modesty/pdf2json)
 
-var nodeUtil = require("util"), fs = require("fs"), PDFParser = require("pdf2json/pdfparser"), http = require('http');;
+var nodeUtil = require("util");
+var fs = require("fs");
+var PDFParser = require("pdf2json/pdfparser");
+var http = require('http');
+var iron_worker = require('iron_worker');
+
+console.log(iron_worker.config()["db_uri"]);
+
 var pdfParser = new PDFParser();
 
 var date = new Date();
@@ -28,7 +35,7 @@ function newRow(finishedRow) {
 	if (finishedRow) {
 		dataRows.push(finishedRow);
 		console.log(JSON.stringify(finishedRow, null, 4));
-		fs.appendFileSync("./tmp/output.json", JSON.stringify(finishedRow, null, 4) + ',');
+		fs.appendFileSync("./output.json", JSON.stringify(finishedRow, null, 4) + ',');
 	}
 	return emptyRow;
 }
@@ -36,15 +43,18 @@ function newRow(finishedRow) {
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 ////Using a local copy for offline development
 
-
+var responseData = [];
 var download = function(url, dest, cb) {
   var file = fs.createWriteStream(dest);
   var request = http.get(url, function(response) {
-    response.pipe(file);
-    file.on('finish', function() {
-      file.close(cb);
-      pdfParser.loadPDF(dest);
-    });
+		console.log("File Downloaded");
+		response.on('data', function(chunk) {
+			responseData.push(chunk);
+		});
+		response.on('end', function() {
+  		var buffer = Buffer.concat(responseData);
+			pdfParser.parseBuffer(buffer);
+		});
   });
 }
 
@@ -67,16 +77,16 @@ for (var i=0; i<pages.length; i++) {
 	for (var j=0; j<texts.length; j++) {
 		textInfo = texts[j];
 		text = decodeURIComponent(textInfo.R[0].T);
-		
+
 		//Each page contains a bunch of text fields until you get to the column headers that ends with "Disposition"
 		//We want to (probably) start with the field following "Disposition", which should be the case number
 		if (text != "Disposition" && inPageHeaders) { continue; }
 		if (text == "Disposition" && inPageHeaders) { inPageHeaders = false; continue; }
-		
+
 		//Unfortunately, the fields don't break down perfectly, so things we want to keep together might be broken into multiple parts
 		//For example, multi-line fields in the PDF will be different elements in the texts array
 		//While not every item lines up perfectly, we should be able to use the x position of text fields to determine which column it belongs to
-		
+
 		//Some defaults to base things on
 		//Case # column: x = 8.258
 		//Date Reported: x = 17.444
@@ -85,7 +95,7 @@ for (var i=0; i<pages.length; i++) {
 		//Occurence Date: x = 86.281
 		//Occurence Time: x = 96.429
 		//Disposition: x = 111.419
-		
+
 		if (textInfo.x < 10.0) {
 			//Case # column
 			if(isNewRow) {
@@ -118,11 +128,11 @@ for (var i=0; i<pages.length; i++) {
 			//Disposition column
 			if (currentRow.disposition) { currentRow.disposition += "" + text;
 			} else { currentRow.disposition = text; }
-		}		
+		}
 		isNewRow = true; //Everything except a case # will reach here, so that each time we hit a new case # column we can know it is a new row
 	}
 }
 
 }); //End pdfParser_dataReady
 
-download(url, "./tmp/test.pdf", null);
+download(url, "./test.pdf", null);
