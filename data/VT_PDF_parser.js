@@ -9,23 +9,12 @@ var http = require('http');
 var iron_worker = require('iron_worker');
 var MongoClient = require('mongodb').MongoClient;
 
-var pdfParser = new PDFParser();
-
-var date = new Date();
-var year = date.getFullYear();
-var month = date.getMonth()+1;
-month = "0" + month;
-month = month.substr(month.length - 2);
-
-var url = "http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/";
-url += "VT_" + year + "-" + month + "_Crime_Log.pdf";
-console.log(url);
-
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 //Using a local copy for offline development
 //pdfParser.loadPDF(url);
 
 //Create an empty data structure for the output
+var url;
 var dataRows = [];
 var database, collection;
 
@@ -33,9 +22,10 @@ var database, collection;
 function newRow(finishedRow) {
 	emptyRow = {"caseNumber":null, "dateReported":null, "criminalOffense":null, "location":null, "date":null, "time":null, "disposition":null};
 	if (finishedRow) {
+		finishedRow.url = url;
 		dataRows.push(finishedRow);
 		collection.update(finishedRow, finishedRow, {upsert:true});
-		console.log(JSON.stringify(finishedRow, null, 4));
+		//console.log(JSON.stringify(finishedRow, null, 4));
 		//fs.appendFileSync("./output.json", JSON.stringify(finishedRow, null, 4) + ',');
 	}
 	return emptyRow;
@@ -43,23 +33,30 @@ function newRow(finishedRow) {
 
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 ////Using a local copy for offline development
+var download = function(url, cb) {
+	var pdfParser = new PDFParser();
+	pdfParser.on("pdfParser_dataReady", processPdf);
 
-var responseData = [];
-var download = function(url, dest, cb) {
-  var file = fs.createWriteStream(dest);
+	var responseData = [];
   var request = http.get(url, function(response) {
-		console.log("File Downloaded");
-		response.on('data', function(chunk) {
-			responseData.push(chunk);
-		});
-		response.on('end', function() {
-  		var buffer = Buffer.concat(responseData);
-			pdfParser.parseBuffer(buffer);
-		});
+		if(response.statusCode === 200) {
+			console.log("File Downloaded");
+			response.on('data', function(chunk) {
+				responseData.push(chunk);
+			});
+			response.on('end', function() {
+	  		var buffer = Buffer.concat(responseData);
+				pdfParser.parseBuffer(buffer);
+			});
+		} else {
+			console.log("Error getting file");
+			counter = 100;
+			next();
+		}
   });
 }
 
-pdfParser.on("pdfParser_dataReady", function(jsonData) {
+function processPdf(jsonData){
 	var currentRow = null;
 	var isNewRow = true;
 
@@ -132,15 +129,51 @@ pdfParser.on("pdfParser_dataReady", function(jsonData) {
 			isNewRow = true; //Everything except a case # will reach here, so that each time we hit a new case # column we can know it is a new row
 		}
 	}
-	console.log("Closing database");
-	database.close();
-	console.log("All done!");
-}); //End pdfParser_dataReady
+
+	next();
+} //End pdfParser_dataReady
+
+
+function getUrl(date) {
+	var year = date.getFullYear();
+	var month = date.getMonth()+1;
+	month = "0" + month;
+	month = month.substr(month.length - 2);
+
+	var url = "http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/";
+	url += "VT_" + year + "-" + month + "_Crime_Log.pdf";
+	console.log(url);
+	return url;
+}
+
+var now = new Date();
+now.setDate(1);
+var counter = 0;
+var historical = iron_worker.config()["historical"];
+
+function next() {
+	console.log("Found " + dataRows.length + " rows");
+	dataRows = [];
+	console.log("Next!");
+
+	if(historical && counter < 100) {
+		counter++;
+		now.setMonth(now.getMonth() - 1);
+
+		url = getUrl(now);
+		download(url, null);
+	} else {
+		console.log("Closing database");
+		database.close();
+	}
+}
 
 var db_uri = iron_worker.config()["db_uri"];
 MongoClient.connect(db_uri, function(err, db) {
 	console.log("Connected correctly to database");
 	database = db;
 	collection = db.collection('incidents');
-	download(url, "./test.pdf", null);
+
+	url = getUrl(now);
+	download(url, null);
 });
