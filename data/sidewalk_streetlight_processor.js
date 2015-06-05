@@ -3,28 +3,59 @@
 
 var pg = require('pg');
 
-var conString = "postgres://blacksburg_read:nrv@postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com/blacksburg";
+var conString = "postgres://postgres_admin:IAb0U!J*dhJn@postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com/blacksburg";
 
 pg.connect(conString, function(err, client, done) {
   if(err) {
     return console.error('error fetching client from pool', err);
   }
-  client.query('SELECT $1::int AS number', ['1'], function(err, result) {
-    //call `done()` to release the client back to the pool
-    done();
+  //Get all of the sidewalk segment points
+  client.query('SELECT gid, layer, length, (ST_DumpPoints(geom)).path AS path, ST_AsGeoJSON((ST_DumpPoints(geom)).geom) AS geom FROM sidewalks LIMIT 20;', function(err, result) {
 
     if(err) {
       return console.error('error running query', err);
     }
-    console.log(result.rows[0].number);
-    //output: 1
-    client.end();
+    
+    //Put all of these into a multi-dimensional array, one row for each segment (gid)
+    var gidArray = [];
+    for (var i = 0; i < result.rows.length; i++) {
+      if(typeof gidArray[result.rows[i].gid] === 'undefined') {
+        gidArray[result.rows[i].gid] = [result.rows[i],];
+      } else {
+        gidArray[result.rows[i].gid].push(result.rows[i]);
+      }
+    }
+
+    var associatedRoads = [];
+    for (var i = 1; i < gidArray.length; i++) {
+      var gid = gidArray[i][0]['gid'];
+      for (var j = 0; j < gidArray[i].length; j++) {
+        var point = JSON.parse(gidArray[i][j]['geom']);
+        //console.log(point.coordinates[0]);
+        
+        client.query('SELECT gid, ST_Distance(geom, ST_SetSRID(ST_MakePoint($1, $2), 2284)) AS theDistance FROM roads ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint($1, $2), 2284)) LIMIT 1;', [point.coordinates[0], point.coordinates[1]], function(err, distanceResults) {
+          if(err) {
+            return console.error('Error running distance query', err);
+          }
+          if(typeof associatedRoads[gid] === 'undefined') {
+            associatedRoads[gid] = [distanceResults.rows[0],];
+          } else {
+            associatedRoads[gid].push(distanceResults.rows[0]);
+          }
+          console.log(associatedRoads[gid]);
+        });
+
+      } 
+    }
+    //release the client back to the pool
+    //done();
+    //client.end();
   });
 });
 
-//Get all of the sidewalk segments
-//SELECT gid, layer, length, (ST_DumpPoints(geom)).path as path, ST_AsGeoJSON((ST_DumpPoints(geom)).geom) FROM sidewalks;
-
+function associate_road(client, gidRow) {
+  client.query('');
+}
 //Parse that into a structured array with one row for each gid
 
 //for each gid
