@@ -3,14 +3,14 @@
 
 var pg = require('pg');
 
-var conString = "postgres://postgres_admin:IAb0U!J*dhJn@postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com/blacksburg";
+var conString = "postgres://postgres_admin:password@postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com/blacksburg";
 
 pg.connect(conString, function(err, client, done) {
   if(err) {
     return console.error('error fetching client from pool');
   }
   //Get a list of all the sidewalk GIDs
-  client.query('SELECT DISTINCT gid FROM sidewalks ORDER BY gid LIMIT 100;', function(err, sidewalkResults) {
+  client.query('SELECT DISTINCT gid FROM sidewalks ORDER BY gid;', function(err, sidewalkResults) {
     console.log(sidewalkResults.rows)
     processSidewalks(sidewalkResults.rows);
   });
