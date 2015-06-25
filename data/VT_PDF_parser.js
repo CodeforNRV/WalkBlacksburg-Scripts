@@ -9,6 +9,9 @@ var http = require('http');
 var iron_worker = require('iron_worker');
 var MongoClient = require('mongodb').MongoClient;
 
+//Install node-gdal: https://github.com/naturalatlas/node-gdal
+var gdal = require('gdal');
+
 //The PDF can/should be pulled from the website directly (e.g. http://www.police.vt.edu/VTPD_v2.1/crime_stats/crime_logs/data/VT_2014-12_Crime_Log.pdf)
 //Using a local copy for offline development
 //pdfParser.loadPDF(url);
