@@ -1,0 +1,13 @@
+{
+  "name": "Safe Walk Blacksburg",
+  "description": "A KML overlay on google maps of the safest streets to walk on",
+
+  "keywords": [
+    "pedestrian",
+    "go",
+    "safety",
+  ],
+
+  "website": "http://github.com/CodeforNRV/safe_walk_blacksburg",
+  "repository": "http://github.com/CodeforNRV/safe_walk_blacksburg",
+}
