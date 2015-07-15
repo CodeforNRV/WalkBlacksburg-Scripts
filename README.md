@@ -10,3 +10,7 @@ Street lighting and sidewalk data will come from the Town of Blacksburg [GIS Dep
 Crime data will come from 
 * VT Police Department [Crime Log PDFs](http://www.police.vt.edu/VTPD_v2.1/crime_logs.php)
 * Town reports from [CrimeMapping.com](http://www.crimemapping.com/map.aspx?aid=36898f05-f44b-4778-8c73-27f88b794e0c), which the town uses to publish their data
+
+# Heroku Deployment
+The application is being deployed to heroku. The web server binary is located in
+[cmd/safewalkd](tree/master/cmd/safewalkd) directory and is a go binary.
