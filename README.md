@@ -14,3 +14,12 @@ Crime data will come from
 # Heroku Deployment
 The application is being deployed to heroku. The web server binary is located in
 [cmd/safewalkd](tree/master/cmd/safewalkd) directory and is a go binary.
+
+The heroku app need the following environment variables set.
+
+```
+NRV_PG_DBNAME=blacksburg
+NRV_PG_DBPASS=nrv
+NRV_PG_HOST=postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com
+NRV_PG_USER=blacksburg_read
+```

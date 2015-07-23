@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"text/template"
 
 	_ "github.com/CodeforNRV/safe_walk_blacksburg/Godeps/_workspace/src/github.com/lib/pq"
@@ -85,7 +87,12 @@ func calculateSafetyRating(hasSidewalks, hasStreetlights bool, speedlmt float64)
 }
 
 func kmlExecute(w io.Writer) error {
-	db, err := sql.Open("postgres", "host=postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com user=blacksburg_read dbname=blacksburg password=nrv")
+	host := os.Getenv("NRV_PG_HOST")
+	user := os.Getenv("NRV_PG_USER")
+	dbname := os.Getenv("NRV_PG_DBNAME")
+	dbpass := os.Getenv("NRV_PG_DBPASS")
+
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s user=%s dbname=%s password=%s", host, user, dbname, dbpass))
 	if err != nil {
 		return err
 	}
