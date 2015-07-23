@@ -3,11 +3,11 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"log"
-	"os"
 	"text/template"
 
-	_ "github.com/lib/pq"
+	_ "github.com/CodeforNRV/safe_walk_blacksburg/Godeps/_workspace/src/github.com/lib/pq"
 )
 
 type Coord struct {
@@ -84,10 +84,10 @@ func calculateSafetyRating(hasSidewalks, hasStreetlights bool, speedlmt float64)
 	return color
 }
 
-func main() {
+func kmlExecute(w io.Writer) error {
 	db, err := sql.Open("postgres", "host=postgres1.ceipocejvkue.us-west-2.rds.amazonaws.com user=blacksburg_read dbname=blacksburg password=nrv")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 
@@ -95,7 +95,7 @@ func main() {
 	// Uses PostGIS to transform the geometry from SRID 2284 ==> SRID 4326
 	rows, err := db.Query("SELECT name, speedlmt, hassidewalks, hasstreetlights, ST_AsGeoJson(ST_Transform(geom,4326)) FROM roads")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer rows.Close()
 
@@ -112,7 +112,7 @@ func main() {
 
 		err = rows.Scan(&name, &speedlmt, &hasSidewalks, &hasStreetlights, &rawGeomJson)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		roads = append(roads, Road{
@@ -122,10 +122,7 @@ func main() {
 		})
 	}
 
-	err = kmltpl.Execute(os.Stdout, kml{roads})
-	if err != nil {
-		log.Fatal(err)
-	}
+	return kmltpl.Execute(w, kml{roads})
 }
 
 type kml struct {
