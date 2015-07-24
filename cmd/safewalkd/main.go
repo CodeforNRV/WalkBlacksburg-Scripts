@@ -6,7 +6,12 @@ import (
 	"os"
 )
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "cmd/safewalkd/index.html")
+}
+
 func main() {
+	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/overlay.kml", func(w http.ResponseWriter, r *http.Request) {
 		err := kmlExecute(w)
 		if err != nil {
