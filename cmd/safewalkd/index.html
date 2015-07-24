@@ -22,7 +22,8 @@
 
                 // NOTE: The url provided to the kml MUST be publicly accessible
                 var safeStreetOverlay = new google.maps.KmlLayer({
-                        url: "https://github.com/ghthor/safe_walk_blacksburg/raw/master/www/safewalk.kml",
+                // TODO: Generalize this url based on the heroku hostname
+                        url: "https://dry-castle-3287.herokuapp.com/overlay.kml",
                 });
 
                 safeStreetOverlay.setMap(map);
