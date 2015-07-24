@@ -4,10 +4,24 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 )
 
+type indexParams struct {
+	HerokuURL string
+}
+
+var indexTpl = template.Must(template.ParseFiles("cmd/safewalkd/index.tmpl"))
+var herokuURL = os.Getenv("HEROKU_URL")
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "cmd/safewalkd/index.html")
+	err := indexTpl.Execute(w, indexParams{
+		HerokuURL: herokuURL,
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func main() {

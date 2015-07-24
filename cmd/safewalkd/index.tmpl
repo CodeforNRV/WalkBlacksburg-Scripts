@@ -21,9 +21,9 @@
                 var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
                 // NOTE: The url provided to the kml MUST be publicly accessible
+                //       AND an absolute url including a hostname and protocol(http[s]://).
                 var safeStreetOverlay = new google.maps.KmlLayer({
-                // TODO: Generalize this url based on the heroku hostname
-                        url: "/overlay.kml",
+                        url: "{{.HerokuURL}}overlay.kml",
                 });
 
                 safeStreetOverlay.setMap(map);
