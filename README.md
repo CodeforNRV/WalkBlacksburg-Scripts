@@ -1,4 +1,6 @@
 # safe_walk_blacksburg
+A hodgepodge of scripts to support the WalkBlacksburg app and data backend
+
 An app designed to improve the safety of walking around Blacksburg, VA, 
 particularly at night by showing routes that provide sidewalks and street lighting, 
 and including historical crime data overlays.
